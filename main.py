@@ -89,7 +89,7 @@ while True:
             ref.child("total_attendance").set(detectedFaceStudentInfo["total_attendance"]) # Updates real-time database to local, larger attendance value
             
         if (10 < imgModeCounter < 20):
-            modeType = 2
+            imgModeType = 2
 
         imgBackground[44 : 44 + 633, 808 : 808 + 414] = imgModeList[imgModeType]
 
