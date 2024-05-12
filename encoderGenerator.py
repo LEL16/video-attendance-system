@@ -27,7 +27,7 @@ knownEncodingListWithIds = [knownEncodingList, imgFaceIdList]
 print("Encoding process complete.")
 
 # Dumps a file for all encodings on disk
-encodingFile = open("EncodingFile.p", 'wb')
+encodingFile = open("video-attendance-system/EncodingFile.p", 'wb')
 pickle.dump(knownEncodingListWithIds, encodingFile)
 encodingFile.close()
 print("File saved to disk.")
