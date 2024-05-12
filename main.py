@@ -1,5 +1,6 @@
 import cv2
 import os
+import pickle
 
 cap = cv2.VideoCapture(0) # Starts video capture with my camera (0)
 cap.set(3, 640) # Width (in px)
@@ -13,10 +14,20 @@ imgModePathNameArray = os.listdir(imgModeDirectoryPath) # Gets all the file name
 for imgPath in imgModePathNameArray:
     imgModeList.append(cv2.imread(os.path.join(imgModeDirectoryPath, imgPath)))
 
-print(len(imgModeList))
+# Load an encoding file
+print("Encoding loading process initiated...")
+encodingFile = open('video-attendance-system/EncodingFile.p', 'rb')
+knownEncodingListWithIds = pickle.load(encodingFile)
+encodingFile.close()
+knownFaceEncodingList, knownFaceStudentIdList = knownEncodingListWithIds
+print("Encoding process complete.")
+
 while True: 
     success, img = cap.read()
 
+    imgResized = cv2.resize(img, (0, 0), None, 0.25, 0.25) # Resizes image to 1/4 to save computing power
+    imgResized = cv2.cvtColor(imgResized, cv2.COLOR_BGR2RGB) # Converts image colors from BGR to RGB
+    
     imgBackground[162 : 162 + 480, 55 : 55 + 640] = img # Overlays the webcam in the GUI
     imgBackground[44 : 44 + 633, 808 : 808 + 414] = imgModeList[2]
 
