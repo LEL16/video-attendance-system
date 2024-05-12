@@ -77,8 +77,10 @@ while True:
             print(detectedFaceStudentInfo) 
             
             # Fetching image from storage
-
-        
+            storageBlob = bucket.get_blob(f"video-attendance-system/Images/{id}.png")
+            storageArray = np.frombuffer(storageBlob.download_as_string(), np.uint8)
+            imgModeStudent = cv2.imdecode(storageArray, cv2.COLOR_BGR2RGB)
+            
         cv2.putText(imgBackground, str(detectedFaceStudentInfo["total_attendance"]), (861, 125), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 1) # Displays total attendance in white
         cv2.putText(imgBackground, str(detectedFaceStudentInfo["major"]), (1006, 550), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255), 1) # Displays major in white
         cv2.putText(imgBackground, str(imgModeId), (1006, 493), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255), 1) # Displays major in white
