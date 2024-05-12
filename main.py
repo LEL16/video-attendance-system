@@ -10,6 +10,7 @@ from firebase_admin import db
 from firebase_admin import storage
 import os
 import cv2
+from datetime import datetime
 
 # Connects to FireBase RealTime Database using key
 cred = credentials.Certificate("C:/Users/uthpa/Videos/video-attendance-system/serviceAccountKey.json")
@@ -84,29 +85,47 @@ while True:
             imgModeStudent = cv2.imdecode(storageArray, cv2.COLOR_BGR2RGB)
 
             # Update data for attendance
-            ref = db.reference(f"Students/{imgModeId}")
-            detectedFaceStudentInfo['total_attendance'] += 1 
-            ref.child("total_attendance").set(detectedFaceStudentInfo["total_attendance"]) # Updates real-time database to local, larger attendance value
-            
-        if (10 < imgModeCounter < 20):
-            imgModeType = 2
+            imgModeStudentDatetimeObject = datetime.strptime(detectedFaceStudentInfo["last_attendance_time"], "%Y-%m-%d %H:%M:%S") # Converts from string in database to object datetime
+            imgModeSecondsElapsed = (datetime.now() - imgModeStudentDatetimeObject).total_seconds() # Calculates the time between the first attendance taking and the second attendance taking
+            print(imgModeSecondsElapsed)
+            if (imgModeSecondsElapsed > 30):
+                ref = db.reference(f"Students/{imgModeId}")
+                detectedFaceStudentInfo['total_attendance'] += 1 
+                ref.child("total_attendance").set(detectedFaceStudentInfo["total_attendance"]) # Updates real-time database to local, larger attendance value
+                ref.child("last_attendance_time").set(datetime.now().strftime("%Y-%m-%d %H:%M:%S")) # Updates real-time database to local, larger attendance value
+            else: 
+                modeType = 3
+                counter = 0
+                imgBackground[44 : 44 + 633, 808 : 808 + 414] = imgModeList[imgModeType]
 
-        imgBackground[44 : 44 + 633, 808 : 808 + 414] = imgModeList[imgModeType]
+        if (imgModeType != 3): # If attendance hasn't already been taken
+            if (10 < imgModeCounter < 20):
+                imgModeType = 2
 
-        if (imgModeCounter <= 10):
-            cv2.putText(imgBackground, str(detectedFaceStudentInfo["total_attendance"]), (861, 125), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 1) # Displays total attendance in white
-            cv2.putText(imgBackground, str(detectedFaceStudentInfo["major"]), (1006, 550), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255), 1) # Displays major in white
-            cv2.putText(imgBackground, str(imgModeId), (1006, 493), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255), 1) # Displays major in white
-            cv2.putText(imgBackground, str(detectedFaceStudentInfo["standing"]), (910, 625), cv2.FONT_HERSHEY_COMPLEX, 0.6, (100, 100, 100), 1) # Displays standing in white
-            cv2.putText(imgBackground, str(detectedFaceStudentInfo["year"]), (1025, 625), cv2.FONT_HERSHEY_COMPLEX, 0.6, (100, 100, 100), 1) # Displays year in white
-            cv2.putText(imgBackground, str(detectedFaceStudentInfo["starting_year"]), (1125, 625), cv2.FONT_HERSHEY_COMPLEX, 0.6, (100, 100, 100), 1) # Displays starting year in white
+            imgBackground[44 : 44 + 633, 808 : 808 + 414] = imgModeList[imgModeType]
 
-            (w, h), _ = cv2.getTextSize(detectedFaceStudentInfo["name"], cv2.FONT_HERSHEY_COMPLEX, 1, 1) # Gets width and height of the text
-            nameOffset = 414 // 2 - w // 2 # Calculates offset needed for centering
-            cv2.putText(imgBackground, str(detectedFaceStudentInfo["name"]), (808 + nameOffset, 445), cv2.FONT_HERSHEY_COMPLEX, 1, (50, 50, 50), 1) # Displays name in white
+            if (imgModeCounter <= 10):
+                cv2.putText(imgBackground, str(detectedFaceStudentInfo["total_attendance"]), (861, 125), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 1) # Displays total attendance in white
+                cv2.putText(imgBackground, str(detectedFaceStudentInfo["major"]), (1006, 550), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255), 1) # Displays major in white
+                cv2.putText(imgBackground, str(imgModeId), (1006, 493), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255), 1) # Displays major in white
+                cv2.putText(imgBackground, str(detectedFaceStudentInfo["standing"]), (910, 625), cv2.FONT_HERSHEY_COMPLEX, 0.6, (100, 100, 100), 1) # Displays standing in white
+                cv2.putText(imgBackground, str(detectedFaceStudentInfo["year"]), (1025, 625), cv2.FONT_HERSHEY_COMPLEX, 0.6, (100, 100, 100), 1) # Displays year in white
+                cv2.putText(imgBackground, str(detectedFaceStudentInfo["starting_year"]), (1125, 625), cv2.FONT_HERSHEY_COMPLEX, 0.6, (100, 100, 100), 1) # Displays starting year in white
 
-            imgBackground[175 : 175 + 216, 909 : 909 + 216] = imgModeStudent # Adds student image to GUI
+                (w, h), _ = cv2.getTextSize(detectedFaceStudentInfo["name"], cv2.FONT_HERSHEY_COMPLEX, 1, 1) # Gets width and height of the text
+                nameOffset = 414 // 2 - w // 2 # Calculates offset needed for centering
+                cv2.putText(imgBackground, str(detectedFaceStudentInfo["name"]), (808 + nameOffset, 445), cv2.FONT_HERSHEY_COMPLEX, 1, (50, 50, 50), 1) # Displays name in white
+
+                imgBackground[175 : 175 + 216, 909 : 909 + 216] = imgModeStudent # Adds student image to GUI
 
         imgModeCounter += 1
+
+        if (imgModeCounter >= 20): # After 20 frames, another attendant can be inputted into the system
+            imgModeCounter = 0
+            imgModeType = 0
+            detectedFaceStudentInfo = []
+            imgModeStudent = []
+            imgBackground[44 : 44 + 633, 808 : 808 + 414] = imgModeList[imgModeType]
+
     cv2.imshow("face attendance", imgBackground) # Background for the GUI
     cv2.waitKey(1) # Wait-time in ms
